@@ -1,6 +1,7 @@
 package org.owntracks.android.ui.preferences
 
 import android.os.Bundle
+import androidx.core.app.NotificationManagerCompat
 import androidx.preference.Preference
 import dagger.Binds
 import dagger.Module
@@ -18,7 +19,6 @@ class AdvancedFragment : AbstractPreferenceFragment() {
         setPreferencesFromResource(R.xml.preferences_advanced, rootKey)
 
         findPreference<Preference>(getString(R.string.preferenceKeyDebugLog))?.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _: Preference, newValue: Any? ->
-            if (newValue !is Boolean) false
             if (newValue as Boolean) {
                 enableDebugLog()
             } else {
@@ -35,7 +35,9 @@ class AdvancedFragment : AbstractPreferenceFragment() {
 
     private fun disableDebugLog() {
         Timber.forest().filterIsInstance<TimberDebugLogFileTree>().forEach { Timber.uproot(it) }
+        NotificationManagerCompat.from(requireContext()).cancel(TimberDebugLogFileTree.DEBUG_NOTIFICATION_ID)
         Timber.i("Debug logging disabled")
+
     }
 
     @Module(includes = [BaseFragmentModule::class])
