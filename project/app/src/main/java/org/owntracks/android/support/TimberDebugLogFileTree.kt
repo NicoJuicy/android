@@ -1,7 +1,10 @@
 package org.owntracks.android.support
 
 import android.content.Context
+import android.os.Environment
 import android.util.Log
+import android.widget.Toast
+import timber.log.Timber
 import timber.log.Timber.DebugTree
 import java.io.File
 import java.text.SimpleDateFormat
@@ -17,16 +20,18 @@ class TimberDebugLogFileTree(context: Context) : DebugTree() {
 
     init {
         val dateformat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        Timber.i("External storage state: %s", Environment.getExternalStorageState())
         val logDir = context.getExternalFilesDir("logs")
         val pattern = File(logDir, String.format("%s-%%u.txt", dateformat))
         val filehandler = FileHandler(pattern.absolutePath, true)
         filehandler.formatter = NoFormatter()
         this.logger.level = Level.ALL
         this.logger.addHandler(filehandler)
+        Toast.makeText(context, "OwnTracks: Debug log enabled. Writing to %s".format(logDir), Toast.LENGTH_LONG).show()
     }
 
-    private fun skipLog(priority: Int, tag: String?, message: String, t: Throwable?): Boolean {
-        return priorityFilter.skipLog(priority, tag, message, t)
+    private fun skipLog(priority: Int): Boolean {
+        return priorityFilter.skipLog(priority)
     }
 
     private fun format(priority: Int, tag: String?, message: String): String {
@@ -34,7 +39,7 @@ class TimberDebugLogFileTree(context: Context) : DebugTree() {
     }
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        if (skipLog(priority, tag, message, t)) {
+        if (skipLog(priority)) {
             return
         }
         val formattedMsg = format(priority, tag, message)
@@ -92,12 +97,8 @@ internal class LogcatFormatter {
 }
 
 internal class PriorityFilter(private val minPriority: Int) {
-    fun skipLog(priority: Int, tag: String?, message: String?, t: Throwable?): Boolean {
+    fun skipLog(priority: Int): Boolean {
         return priority < minPriority
-    }
-
-    fun isLoggable(priority: Int, tag: String?): Boolean {
-        return priority >= minPriority
     }
 
 }
